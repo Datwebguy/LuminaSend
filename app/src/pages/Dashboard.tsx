@@ -390,34 +390,43 @@ export default function Dashboard() {
 											</div>
 											<div>
 												<h3 className="font-bold">
-													{earnProtocol === "blend"
-														? "Blend lending pool"
-														: "Aquarius liquidity pool"}
+													External protocol contracts
 												</h3>
 												<p className="text-xs text-slate-400">
-													Live on Stellar Testnet
+													Infrastructure used by LuminaSend · Testnet
 												</p>
 											</div>
 										</div>
-										<a
-											href={`https://stellar.expert/explorer/testnet/contract/${
-												earnProtocol === "blend"
-													? config.blendPoolId
-													: config.aquariusPoolId
-											}`}
-											target="_blank"
-											rel="noreferrer"
-											className="mt-4 flex items-center justify-between rounded-xl bg-slate-50 px-3 py-3 text-xs font-bold text-slate-600"
-										>
-											{shortAddress(
-												earnProtocol === "blend"
-													? config.blendPoolId
-													: config.aquariusPoolId,
-												8,
-												7,
-											)}
-											<ExternalLink size={14} />
-										</a>
+										<div className="mt-4 space-y-2">
+											{[
+												{
+													id: config.blendPoolId,
+													label: "Blend · Regional Starter Pack",
+												},
+												{
+													id: config.aquariusPoolId,
+													label: "Aquarius · Circle USDC/XLM pool",
+												},
+											].map((protocolContract) => (
+												<a
+													key={protocolContract.id}
+													href={`https://stellar.expert/explorer/testnet/contract/${protocolContract.id}`}
+													target="_blank"
+													rel="noreferrer"
+													className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-3 text-xs text-slate-600"
+												>
+													<span>
+														<span className="block font-bold text-ink">
+															{protocolContract.label}
+														</span>
+														<span className="mt-0.5 block font-semibold">
+															{shortAddress(protocolContract.id, 8, 7)}
+														</span>
+													</span>
+													<ExternalLink size={14} />
+												</a>
+											))}
+										</div>
 									</div>
 								</div>
 							</div>
