@@ -29,9 +29,9 @@ import SavingsModal, {
 } from "../components/SavingsModal"
 import SendModal from "../components/SendModal"
 import {
-	loadSavingsSnapshot,
-	requestBlendTestAssets,
-	type SavingsSnapshot,
+	type EarnProtocol,
+	loadSavingsSnapshots,
+	type SavingsSnapshots,
 } from "../lib/savings"
 import { config } from "../lib/config"
 import { shortAddress } from "../lib/stellar"
@@ -57,16 +57,16 @@ export default function Dashboard() {
 		useState<SavingsAction>("deposit")
 	const [savingsLoading, setSavingsLoading] = useState(true)
 	const [savingsError, setSavingsError] = useState<string | null>(null)
-	const [isFundingSavings, setIsFundingSavings] = useState(false)
+	const [earnProtocol, setEarnProtocol] = useState<EarnProtocol>("blend")
 	const [copied, setCopied] = useState(false)
-	const [savings, setSavings] = useState<SavingsSnapshot | null>(null)
+	const [savings, setSavings] = useState<SavingsSnapshots | null>(null)
 
 	const refreshSavings = useCallback(async () => {
 		if (!wallet.address) return
 		setSavingsLoading(true)
 		setSavingsError(null)
 		try {
-			setSavings(await loadSavingsSnapshot(wallet.address))
+			setSavings(await loadSavingsSnapshots(wallet.address))
 		} catch (cause) {
 			setSavingsError(
 				cause instanceof Error
@@ -82,7 +82,7 @@ export default function Dashboard() {
 		if (!wallet.address) return
 		let cancelled = false
 
-		loadSavingsSnapshot(wallet.address)
+		loadSavingsSnapshots(wallet.address)
 			.then((snapshot) => {
 				if (cancelled) return
 				setSavings(snapshot)
@@ -129,24 +129,6 @@ export default function Dashboard() {
 	function openSavings(action: SavingsAction) {
 		setSavingsAction(action)
 		setSavingsOpen(true)
-	}
-
-	async function fundSavingsWallet() {
-		if (!wallet.address) return
-		setIsFundingSavings(true)
-		setSavingsError(null)
-		try {
-			await requestBlendTestAssets(wallet.address)
-			await refreshAll()
-		} catch (cause) {
-			setSavingsError(
-				cause instanceof Error
-					? cause.message
-					: "Could not add Blend Testnet assets.",
-			)
-		} finally {
-			setIsFundingSavings(false)
-		}
 	}
 
 	return (
@@ -394,11 +376,11 @@ export default function Dashboard() {
 								<div className="space-y-5">
 									<SavingsCard
 										error={savingsError}
-										isFunding={isFundingSavings}
 										isLoading={savingsLoading}
-										snapshot={savings}
+										protocol={earnProtocol}
+										snapshots={savings}
 										onDeposit={() => openSavings("deposit")}
-										onFund={() => void fundSavingsWallet()}
+										onProtocolChange={setEarnProtocol}
 										onWithdraw={() => openSavings("withdraw")}
 									/>
 									<div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
@@ -407,19 +389,33 @@ export default function Dashboard() {
 												<ShieldCheck size={21} />
 											</div>
 											<div>
-												<h3 className="font-bold">Blend lending pool</h3>
+												<h3 className="font-bold">
+													{earnProtocol === "blend"
+														? "Blend lending pool"
+														: "Aquarius liquidity pool"}
+												</h3>
 												<p className="text-xs text-slate-400">
 													Live on Stellar Testnet
 												</p>
 											</div>
 										</div>
 										<a
-											href={`https://stellar.expert/explorer/testnet/contract/${config.blendPoolId}`}
+											href={`https://stellar.expert/explorer/testnet/contract/${
+												earnProtocol === "blend"
+													? config.blendPoolId
+													: config.aquariusPoolId
+											}`}
 											target="_blank"
 											rel="noreferrer"
 											className="mt-4 flex items-center justify-between rounded-xl bg-slate-50 px-3 py-3 text-xs font-bold text-slate-600"
 										>
-											{shortAddress(config.blendPoolId, 8, 7)}
+											{shortAddress(
+												earnProtocol === "blend"
+													? config.blendPoolId
+													: config.aquariusPoolId,
+												8,
+												7,
+											)}
 											<ExternalLink size={14} />
 										</a>
 									</div>
@@ -461,12 +457,21 @@ export default function Dashboard() {
 				<SavingsModal
 					action={savingsAction}
 					address={wallet.address}
-					apy={savings.apy}
+					apy={savings[earnProtocol].apy}
 					available={
 						savingsAction === "deposit"
-							? savings.walletBalance
-							: Math.min(savings.supplied, savings.poolLiquidity)
+							? Math.min(
+									savings[earnProtocol].walletBalance,
+									earnProtocol === "aquarius"
+										? wallet.balances.xlmAvailable /
+												savings.aquarius.xlmPerUsdc
+										: savings[earnProtocol].walletBalance,
+								)
+							: savings[earnProtocol].withdrawableUsdc
 					}
+					protocol={earnProtocol}
+					xlmAvailable={wallet.balances.xlmAvailable}
+					xlmPerUsdc={savings[earnProtocol].xlmPerUsdc}
 					onClose={() => {
 						setSavingsOpen(false)
 						setView("overview")
@@ -620,54 +625,84 @@ function StatCard({
 
 function SavingsCard({
 	error,
-	isFunding,
 	isLoading,
-	snapshot,
+	protocol,
+	snapshots,
 	onDeposit,
-	onFund,
+	onProtocolChange,
 	onWithdraw,
 }: {
 	error: string | null
-	isFunding: boolean
 	isLoading: boolean
-	snapshot: SavingsSnapshot | null
+	protocol: EarnProtocol
+	snapshots: SavingsSnapshots | null
 	onDeposit: () => void
-	onFund: () => void
+	onProtocolChange: (protocol: EarnProtocol) => void
 	onWithdraw: () => void
 }) {
+	const snapshot = snapshots?.[protocol] ?? null
+	const bestProtocol =
+		snapshots && snapshots.aquarius.apy > snapshots.blend.apy
+			? "aquarius"
+			: "blend"
 	return (
 		<div className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
 			<div className="bg-gradient-to-br from-lumina-50 to-white p-6">
+				<div className="mb-5 grid grid-cols-2 gap-1 rounded-xl bg-white/80 p-1 shadow-sm">
+					{(["blend", "aquarius"] as const).map((option) => (
+						<button
+							key={option}
+							type="button"
+							onClick={() => onProtocolChange(option)}
+							className={`rounded-lg px-3 py-2 text-xs font-bold transition ${
+								protocol === option
+									? "bg-ink text-white"
+									: "text-slate-500 hover:text-ink"
+							}`}
+						>
+							{option === "blend" ? "Blend lending" : "Aquarius LP"}
+						</button>
+					))}
+				</div>
 				<div className="flex items-start justify-between">
 					<div className="grid h-12 w-12 place-items-center rounded-2xl bg-lumina-500 text-white">
 						<TrendingUp size={23} />
 					</div>
 					<span className="rounded-full bg-lumina-100 px-3 py-1.5 text-xs font-bold text-lumina-700">
 						{snapshot
-							? `${snapshot.apy.toFixed(2)}% variable APY`
+							? `${snapshot.apy.toFixed(2)}% live APY`
 							: "Loading rate"}
 					</span>
 				</div>
+				{snapshot && protocol === bestProtocol && (
+					<p className="mt-3 text-[10px] font-bold tracking-wider text-lumina-700 uppercase">
+						Best currently verified Circle USDC rate
+					</p>
+				)}
 				<p className="mt-6 text-sm font-semibold text-slate-400">
-					Your earning position
+					{protocol === "blend"
+						? "Your lending position"
+						: "Your LP position value"}
 				</p>
 				{isLoading && !snapshot ? (
 					<div className="mt-4 flex items-center gap-2 text-sm font-semibold text-slate-400">
 						<LoaderCircle size={17} className="animate-spin" />
-						Reading Blend pool state
+						Reading live protocol state
 					</div>
 				) : snapshot ? (
 					<>
 						<p className="mt-1 text-3xl font-bold tracking-tight">
-							{snapshot.supplied.toLocaleString(undefined, {
+							{snapshot.positionValue.toLocaleString(undefined, {
 								maximumFractionDigits: 7,
 							})}{" "}
-							<span className="text-base text-slate-400">USDC</span>
+							<span className="text-base text-slate-400">
+								USDC{protocol === "aquarius" ? " eq." : ""}
+							</span>
 						</p>
 						<div className="mt-5 space-y-2 text-xs">
 							<div className="flex justify-between">
 								<span className="text-slate-400">
-									Blend USDC in wallet
+									Circle USDC in wallet
 								</span>
 								<span className="font-bold">
 									{snapshot.walletBalance.toFixed(7)} USDC
@@ -679,14 +714,22 @@ function SavingsCard({
 								</span>
 								<span className="font-bold text-lumina-700">
 									+
-									{((snapshot.supplied * snapshot.apy) / 100).toFixed(7)}{" "}
+									{((snapshot.positionValue * snapshot.apy) / 100).toFixed(
+										7,
+									)}{" "}
 									USDC
 								</span>
 							</div>
 							<div className="flex justify-between">
-								<span className="text-slate-400">Pool utilization</span>
+								<span className="text-slate-400">
+									{protocol === "blend"
+										? "Pool utilization"
+										: "XLM in LP position"}
+								</span>
 								<span className="font-bold">
-									{snapshot.utilization.toFixed(2)}%
+									{protocol === "blend"
+										? `${snapshot.utilization?.toFixed(2)}%`
+										: `${snapshot.pairedXlm.toFixed(7)} XLM`}
 								</span>
 							</div>
 						</div>
@@ -706,35 +749,24 @@ function SavingsCard({
 						disabled={!snapshot || snapshot.walletBalance <= 0}
 						className="focus-ring flex items-center justify-center gap-2 rounded-xl bg-lumina-500 px-3 py-3 text-sm font-bold text-white disabled:opacity-50"
 					>
-						<Plus size={17} /> Supply
+						<Plus size={17} />{" "}
+						{protocol === "blend" ? "Supply" : "Add liquidity"}
 					</button>
 					<button
 						type="button"
 						onClick={onWithdraw}
 						disabled={
-							!snapshot ||
-							snapshot.supplied <= 0 ||
-							snapshot.poolLiquidity <= 0
+							!snapshot || snapshot.withdrawableUsdc <= 0
 						}
 						className="focus-ring rounded-xl border border-slate-200 px-3 py-3 text-sm font-bold disabled:opacity-40"
 					>
 						Withdraw
 					</button>
 				</div>
-				{snapshot && snapshot.walletBalance <= 0 && (
-					<button
-						type="button"
-						onClick={onFund}
-						disabled={isFunding}
-						className="focus-ring mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-slate-100 px-3 py-3 text-sm font-bold text-slate-700 disabled:opacity-40"
-					>
-						{isFunding && <LoaderCircle size={16} className="animate-spin" />}
-						Get Blend Testnet USDC
-					</button>
-				)}
 				<p className="mt-3 text-[11px] leading-4 text-slate-400">
-					Powered by Blend lending. Yield comes from borrower interest; the
-					rate is variable and supplied balance includes accrued interest.
+					{protocol === "blend"
+						? "Blend yield comes from borrower interest. This pool uses the same Circle USDC shown in your wallet."
+						: "Aquarius earns swap fees but requires equal-value USDC and XLM. LP positions carry price and impermanent-loss risk."}
 				</p>
 			</div>
 		</div>

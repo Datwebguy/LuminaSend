@@ -2,7 +2,8 @@
 
 LuminaSend is a non-custodial cross-border payment and earning application on
 Stellar Testnet. Users connect Freighter, send XLM or USDC, inspect real account
-activity, and supply USDC directly to Blend's lending market.
+activity, and choose between Blend lending and Aquarius liquidity using the
+same Circle Testnet USDC held in their wallet.
 
 Every balance, rate, position, and transaction comes from Stellar. LuminaSend
 does not store private keys, recovery phrases, user profiles, or financial
@@ -20,22 +21,22 @@ records.
 - XLM, spendable XLM, and Circle Testnet USDC balances from Horizon
 - Signed XLM and USDC payments submitted to Stellar Testnet
 - Real payment and Soroban transaction history from Horizon
-- Live Blend USDC supply APY, utilization, liquidity, and wallet-owned position
+- Live Blend and Aquarius Circle-USDC APYs and wallet-owned positions
 - Direct Blend supply and withdrawal transactions signed by the user
-- Blend's official Testnet asset faucet, invoked only when the user requests it
+- Direct Aquarius USDC/XLM liquidity deposits and withdrawals
 - Direct Stellar Expert links for transactions and contracts
 
 ## How earning works
 
-USDC is supplied directly to the Blend Testnet V2 lending pool. Borrowers
-pay interest to use pool liquidity, and that interest increases the value of
-suppliers' positions. There is no LuminaSend-funded reward reserve and no fixed
-or promised rate.
+Blend supplies Circle USDC to a lending pool where borrower interest increases
+suppliers' positions. Aquarius pairs Circle USDC with XLM in an AMM, where
+liquidity providers earn swap fees and accept price and impermanent-loss risk.
+There is no LuminaSend-funded reward reserve and no fixed or promised rate.
 
-The dashboard reads Blend's current variable supply APY from the live pool.
-Accrued interest is already included in the supplied balance. Rates change with
-market utilization, and withdrawals depend on available pool liquidity.
-Testnet assets have no monetary value.
+The dashboard reads both rates from live protocol data and identifies the best
+currently verified Circle-USDC option. A 5% target is never substituted for a
+real network rate. Testnet assets and reported Testnet yields have no monetary
+value.
 
 ## Network configuration
 
@@ -43,16 +44,12 @@ LuminaSend is intentionally restricted to Stellar Testnet.
 
 | Resource | Address |
 | --- | --- |
-| Blend Testnet V2 pool | `CCEBVDYM32YNYCVNRXQKDFFPISJJCV557CDZEIRBEE4NCV4KHPQ44HGF` |
-| Blend Testnet USDC contract | `CAQCFVLOBK5GIULPNZRGATJJMIZL5BSP7X5YJVMGCPTUEPFM4AVSRCJU` |
-| Blend Testnet USDC issuer | `GATALTGTWIOT6BUDBCZM3Q4OQ4BO2COLOAZ7IYSKPLC2PMSOPPGF5V56` |
+| Blend Regional Starter Pack | `CAPBMXIQTICKWFPWFDJWMAKBXBPJZUKLNONQH3MLPLLBKQ643CYN5PRW` |
+| Aquarius Circle USDC/XLM pool | `CDVB6O3WX24AAZ77SQRN52ABU4ECB66N36FG5BFVPTV54DPG3V6MOTOD` |
+| Circle Testnet USDC contract | `CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA` |
 | Circle Testnet USDC issuer | `GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5` |
 
-[Inspect the Blend pool on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CCEBVDYM32YNYCVNRXQKDFFPISJJCV557CDZEIRBEE4NCV4KHPQ44HGF).
-
-Circle Testnet USDC is used for remittance payments. Blend Testnet USDC is the
-separate test asset supported by Blend's Testnet pool; the interface labels
-these uses separately.
+[Inspect the Blend pool on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CAPBMXIQTICKWFPWFDJWMAKBXBPJZUKLNONQH3MLPLLBKQ643CYN5PRW).
 
 ## Architecture
 
@@ -62,14 +59,14 @@ Freighter
       └─ React + Vite application
           ├─ Horizon: balances, ledgers, payments, activity
           ├─ Stellar RPC: simulation and Soroban submission
-          └─ Blend V2 Soroban pool
-              └─ wallet-owned USDC lending position
+          ├─ Blend lending pool: wallet-owned Circle-USDC position
+          └─ Aquarius AMM: wallet-owned Circle-USDC/XLM LP position
 ```
 
 The project was initialized with Scaffold Stellar and uses React 19,
 TypeScript, Vite, Tailwind CSS, `@stellar/stellar-sdk`,
-`@stellar/freighter-api`, and Blend's official JavaScript SDK. Blend's lending
-contracts are open-source Soroban contracts written in Rust.
+`@stellar/freighter-api`, Blend's official JavaScript SDK, and Aquarius's
+Soroban AMM contracts.
 
 ## Repository structure
 
@@ -78,7 +75,7 @@ LuminaSend/
 ├── app/
 │   ├── src/components/       Payment and lending transaction interfaces
 │   ├── src/contexts/         Wallet context contract
-│   ├── src/lib/              Stellar, Freighter, and Blend services
+│   ├── src/lib/              Stellar, Freighter, Blend, and Aquarius services
 │   ├── src/pages/            Landing page and application dashboard
 │   └── .env.example          Public Testnet configuration
 ├── docs/screenshots/         Product screenshots
@@ -128,10 +125,11 @@ wallet and requires no application secret.
 | `PUBLIC_STELLAR_HORIZON_URL` | Horizon endpoint |
 | `PUBLIC_STELLAR_FRIENDBOT_URL` | Official Stellar Testnet funding endpoint |
 | `PUBLIC_STELLAR_USDC_ISSUER` | Circle Testnet USDC issuer for payments |
-| `PUBLIC_BLEND_POOL_ID` | Blend Testnet V2 pool contract |
-| `PUBLIC_BLEND_USDC_CONTRACT_ID` | Blend pool's USDC asset contract |
-| `PUBLIC_BLEND_USDC_ISSUER` | Blend pool's Testnet USDC issuer |
-| `PUBLIC_BLEND_FAUCET_URL` | Blend's official Testnet asset endpoint |
+| `PUBLIC_STELLAR_NATIVE_ASSET_CONTRACT_ID` | Native XLM asset contract |
+| `PUBLIC_BLEND_POOL_ID` | Blend Regional Starter Pack pool |
+| `PUBLIC_BLEND_USDC_CONTRACT_ID` | Circle Testnet USDC asset contract |
+| `PUBLIC_AQUARIUS_API_URL` | Aquarius live Testnet pool API |
+| `PUBLIC_AQUARIUS_POOL_ID` | Aquarius Circle-USDC/XLM pool |
 
 The application validates required configuration at startup and refuses to run
 with a non-Testnet passphrase.
@@ -159,12 +157,11 @@ Never add private keys, local identities, or `.env` files to Vercel.
 ## Security model
 
 - The browser never requests or stores a secret key.
-- Freighter signs every payment, faucet request, supply, and withdrawal.
-- Lending positions are recorded by Blend for the user's wallet address.
+- Freighter signs every payment, supply, liquidity deposit, and withdrawal.
+- Positions are recorded by Blend or Aquarius for the user's wallet address.
 - LuminaSend has no custody account and no withdrawal authority.
 - Network checks prevent cross-network signing.
 - Recipient addresses and Circle USDC trustlines are validated before payment.
-- The Blend faucet receives a public wallet address only after explicit action.
 
 Please report security concerns according to [SECURITY.md](SECURITY.md).
 

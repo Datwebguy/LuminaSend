@@ -9,8 +9,9 @@ name = "luminasend-deployer"
 default = true
 
 [development.contracts]
-blend_pool = { id = "CCEBVDYM32YNYCVNRXQKDFFPISJJCV557CDZEIRBEE4NCV4KHPQ44HGF", client = true }
-blend_usdc = { id = "CAQCFVLOBK5GIULPNZRGATJJMIZL5BSP7X5YJVMGCPTUEPFM4AVSRCJU", client = true }
+blend_pool = { id = "CAPBMXIQTICKWFPWFDJWMAKBXBPJZUKLNONQH3MLPLLBKQ643CYN5PRW", client = true }
+circle_usdc = { id = "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA", client = true }
+aquarius_pool = { id = "CDVB6O3WX24AAZ77SQRN52ABU4ECB66N36FG5BFVPTV54DPG3V6MOTOD", client = true }
 
 [staging.network]
 rpc-url = "https://soroban-testnet.stellar.org"
@@ -21,5 +22,6 @@ name = "luminasend-deployer"
 default = true
 
 [staging.contracts]
-blend_pool = { id = "CCEBVDYM32YNYCVNRXQKDFFPISJJCV557CDZEIRBEE4NCV4KHPQ44HGF", client = true }
-blend_usdc = { id = "CAQCFVLOBK5GIULPNZRGATJJMIZL5BSP7X5YJVMGCPTUEPFM4AVSRCJU", client = true }
+blend_pool = { id = "CAPBMXIQTICKWFPWFDJWMAKBXBPJZUKLNONQH3MLPLLBKQ643CYN5PRW", client = true }
+circle_usdc = { id = "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA", client = true }
+aquarius_pool = { id = "CDVB6O3WX24AAZ77SQRN52ABU4ECB66N36FG5BFVPTV54DPG3V6MOTOD", client = true }

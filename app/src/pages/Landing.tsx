@@ -31,7 +31,7 @@ const steps = [
 	{
 		number: "03",
 		title: "Earn on what arrives",
-		body: "Supply USDC to Blend and earn the live rate paid by borrowers.",
+		body: "Compare live Blend lending and Aquarius liquidity rates using Circle USDC.",
 		icon: TrendingUp,
 	},
 ]
@@ -55,7 +55,7 @@ const benefits = [
 	{
 		icon: TrendingUp,
 		title: "Grow after payday",
-		body: "Earn transparent, variable lending yield through Blend on Stellar.",
+		body: "Choose between transparent lending and liquidity strategies on Stellar.",
 	},
 ]
 
@@ -215,7 +215,7 @@ export default function Landing() {
 										{[
 											["Wallet authorization", "Freighter"],
 											["Payment settlement", "Stellar Testnet"],
-											["Earning market", "Blend Protocol"],
+											["Earning markets", "Blend + Aquarius"],
 										].map(([label, value]) => (
 											<div
 												key={label}
@@ -253,7 +253,7 @@ export default function Landing() {
 						<span>Purpose-built on</span>
 						<span className="text-lg font-bold tracking-tight text-slate-700">STELLAR</span>
 						<span className="h-4 w-px bg-slate-200" />
-						<span>Live Blend lending</span>
+						<span>Live protocol rates</span>
 						<span className="h-4 w-px bg-slate-200" />
 						<span>Designed for Southeast Asia</span>
 					</div>
