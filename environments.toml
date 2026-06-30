@@ -9,7 +9,8 @@ name = "luminasend-deployer"
 default = true
 
 [development.contracts]
-savings_vault = { id = "CAN7GWJJCUM6UOXYWSWFER7WN5T2MOSC4LLI2UYTIQ2SEHWKOHW2YNPV", client = true }
+blend_pool = { id = "CCEBVDYM32YNYCVNRXQKDFFPISJJCV557CDZEIRBEE4NCV4KHPQ44HGF", client = true }
+blend_usdc = { id = "CAQCFVLOBK5GIULPNZRGATJJMIZL5BSP7X5YJVMGCPTUEPFM4AVSRCJU", client = true }
 
 [staging.network]
 rpc-url = "https://soroban-testnet.stellar.org"
@@ -20,5 +21,5 @@ name = "luminasend-deployer"
 default = true
 
 [staging.contracts]
-savings_vault = { id = "CAN7GWJJCUM6UOXYWSWFER7WN5T2MOSC4LLI2UYTIQ2SEHWKOHW2YNPV", client = true }
-
+blend_pool = { id = "CCEBVDYM32YNYCVNRXQKDFFPISJJCV557CDZEIRBEE4NCV4KHPQ44HGF", client = true }
+blend_usdc = { id = "CAQCFVLOBK5GIULPNZRGATJJMIZL5BSP7X5YJVMGCPTUEPFM4AVSRCJU", client = true }

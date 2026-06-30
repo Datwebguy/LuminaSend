@@ -29,8 +29,8 @@ import SavingsModal, {
 } from "../components/SavingsModal"
 import SendModal from "../components/SendModal"
 import {
-	claimSavingsYield,
 	loadSavingsSnapshot,
+	requestBlendTestAssets,
 	type SavingsSnapshot,
 } from "../lib/savings"
 import { config } from "../lib/config"
@@ -42,7 +42,7 @@ type View = "overview" | "send" | "savings" | "activity"
 const navItems: { id: View; icon: typeof Home; label: string }[] = [
 	{ id: "overview", icon: Home, label: "Overview" },
 	{ id: "send", icon: Send, label: "Send money" },
-	{ id: "savings", icon: PiggyBank, label: "Savings" },
+	{ id: "savings", icon: PiggyBank, label: "Earn" },
 	{ id: "activity", icon: History, label: "Activity" },
 ]
 
@@ -57,7 +57,7 @@ export default function Dashboard() {
 		useState<SavingsAction>("deposit")
 	const [savingsLoading, setSavingsLoading] = useState(true)
 	const [savingsError, setSavingsError] = useState<string | null>(null)
-	const [isClaiming, setIsClaiming] = useState(false)
+	const [isFundingSavings, setIsFundingSavings] = useState(false)
 	const [copied, setCopied] = useState(false)
 	const [savings, setSavings] = useState<SavingsSnapshot | null>(null)
 
@@ -71,7 +71,7 @@ export default function Dashboard() {
 			setSavingsError(
 				cause instanceof Error
 					? cause.message
-					: "Could not load the savings contract.",
+					: "Could not load the Blend lending position.",
 			)
 		} finally {
 			setSavingsLoading(false)
@@ -93,7 +93,7 @@ export default function Dashboard() {
 				setSavingsError(
 					cause instanceof Error
 						? cause.message
-						: "Could not load the savings contract.",
+						: "Could not load the Blend lending position.",
 				)
 			})
 			.finally(() => {
@@ -131,19 +131,21 @@ export default function Dashboard() {
 		setSavingsOpen(true)
 	}
 
-	async function claimYield() {
+	async function fundSavingsWallet() {
 		if (!wallet.address) return
-		setIsClaiming(true)
+		setIsFundingSavings(true)
 		setSavingsError(null)
 		try {
-			await claimSavingsYield(wallet.address)
+			await requestBlendTestAssets(wallet.address)
 			await refreshAll()
 		} catch (cause) {
 			setSavingsError(
-				cause instanceof Error ? cause.message : "Yield claim failed.",
+				cause instanceof Error
+					? cause.message
+					: "Could not add Blend Testnet assets.",
 			)
 		} finally {
-			setIsClaiming(false)
+			setIsFundingSavings(false)
 		}
 	}
 
@@ -392,11 +394,11 @@ export default function Dashboard() {
 								<div className="space-y-5">
 									<SavingsCard
 										error={savingsError}
-										isClaiming={isClaiming}
+										isFunding={isFundingSavings}
 										isLoading={savingsLoading}
 										snapshot={savings}
-										onClaim={() => void claimYield()}
 										onDeposit={() => openSavings("deposit")}
+										onFund={() => void fundSavingsWallet()}
 										onWithdraw={() => openSavings("withdraw")}
 									/>
 									<div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
@@ -405,19 +407,19 @@ export default function Dashboard() {
 												<ShieldCheck size={21} />
 											</div>
 											<div>
-												<h3 className="font-bold">Savings contract</h3>
+												<h3 className="font-bold">Blend lending pool</h3>
 												<p className="text-xs text-slate-400">
 													Live on Stellar Testnet
 												</p>
 											</div>
 										</div>
 										<a
-											href={`https://stellar.expert/explorer/testnet/contract/${config.contractId}`}
+											href={`https://stellar.expert/explorer/testnet/contract/${config.blendPoolId}`}
 											target="_blank"
 											rel="noreferrer"
 											className="mt-4 flex items-center justify-between rounded-xl bg-slate-50 px-3 py-3 text-xs font-bold text-slate-600"
 										>
-											{shortAddress(config.contractId, 8, 7)}
+											{shortAddress(config.blendPoolId, 8, 7)}
 											<ExternalLink size={14} />
 										</a>
 									</div>
@@ -462,8 +464,8 @@ export default function Dashboard() {
 					apy={savings.apy}
 					available={
 						savingsAction === "deposit"
-							? wallet.balances.xlmAvailable
-							: savings.principal
+							? savings.walletBalance
+							: Math.min(savings.supplied, savings.poolLiquidity)
 					}
 					onClose={() => {
 						setSavingsOpen(false)
@@ -495,7 +497,7 @@ function ConnectState({
 				</h2>
 				<p className="mt-4 leading-7 text-slate-500">
 					Connect Freighter to see your Testnet balances, send XLM or USDC, and
-					start an on-chain savings position.
+					start a wallet-owned lending position.
 				</p>
 				<button
 					type="button"
@@ -539,7 +541,9 @@ function BalanceCard({
 			<div className="absolute -right-10 -bottom-28 h-64 w-64 rounded-full border-[40px] border-white/[0.035]" />
 			<div className="relative flex items-start justify-between">
 				<div>
-					<p className="text-sm font-semibold text-white/50">USDC balance</p>
+					<p className="text-sm font-semibold text-white/50">
+						Circle USDC balance
+					</p>
 					<p className="mt-2 text-4xl font-bold tracking-[-0.045em] sm:text-5xl">
 						{usdc.toLocaleString(undefined, {
 							minimumFractionDigits: 2,
@@ -569,7 +573,7 @@ function BalanceCard({
 					onClick={onSave}
 					className="focus-ring flex items-center gap-2 rounded-full bg-white/10 px-5 py-3 text-sm font-bold transition hover:bg-white/15"
 				>
-					<PiggyBank size={17} /> Add to savings
+					<PiggyBank size={17} /> Start earning
 				</button>
 				<button
 					type="button"
@@ -616,24 +620,21 @@ function StatCard({
 
 function SavingsCard({
 	error,
-	isClaiming,
+	isFunding,
 	isLoading,
 	snapshot,
-	onClaim,
 	onDeposit,
+	onFund,
 	onWithdraw,
 }: {
 	error: string | null
-	isClaiming: boolean
+	isFunding: boolean
 	isLoading: boolean
 	snapshot: SavingsSnapshot | null
-	onClaim: () => void
 	onDeposit: () => void
+	onFund: () => void
 	onWithdraw: () => void
 }) {
-	const total = snapshot
-		? snapshot.principal + snapshot.accruedYield
-		: null
 	return (
 		<div className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
 			<div className="bg-gradient-to-br from-lumina-50 to-white p-6">
@@ -642,38 +643,50 @@ function SavingsCard({
 						<TrendingUp size={23} />
 					</div>
 					<span className="rounded-full bg-lumina-100 px-3 py-1.5 text-xs font-bold text-lumina-700">
-						{snapshot ? `${snapshot.apy.toFixed(2)}% APY` : "Loading rate"}
+						{snapshot
+							? `${snapshot.apy.toFixed(2)}% variable APY`
+							: "Loading rate"}
 					</span>
 				</div>
-				<p className="mt-6 text-sm font-semibold text-slate-400">Your savings</p>
+				<p className="mt-6 text-sm font-semibold text-slate-400">
+					Your earning position
+				</p>
 				{isLoading && !snapshot ? (
 					<div className="mt-4 flex items-center gap-2 text-sm font-semibold text-slate-400">
 						<LoaderCircle size={17} className="animate-spin" />
-						Reading contract state
+						Reading Blend pool state
 					</div>
-				) : snapshot && total !== null ? (
+				) : snapshot ? (
 					<>
 						<p className="mt-1 text-3xl font-bold tracking-tight">
-							{total.toLocaleString(undefined, { maximumFractionDigits: 7 })}{" "}
-							<span className="text-base text-slate-400">XLM</span>
+							{snapshot.supplied.toLocaleString(undefined, {
+								maximumFractionDigits: 7,
+							})}{" "}
+							<span className="text-base text-slate-400">USDC</span>
 						</p>
 						<div className="mt-5 space-y-2 text-xs">
 							<div className="flex justify-between">
-								<span className="text-slate-400">Principal</span>
+								<span className="text-slate-400">
+									Blend USDC in wallet
+								</span>
 								<span className="font-bold">
-									{snapshot.principal.toFixed(7)} XLM
+									{snapshot.walletBalance.toFixed(7)} USDC
 								</span>
 							</div>
 							<div className="flex justify-between">
-								<span className="text-slate-400">Accrued yield</span>
+								<span className="text-slate-400">
+									Est. annual earnings
+								</span>
 								<span className="font-bold text-lumina-700">
-									+{snapshot.accruedYield.toFixed(7)} XLM
+									+
+									{((snapshot.supplied * snapshot.apy) / 100).toFixed(7)}{" "}
+									USDC
 								</span>
 							</div>
 							<div className="flex justify-between">
-								<span className="text-slate-400">Reward reserve</span>
+								<span className="text-slate-400">Pool utilization</span>
 								<span className="font-bold">
-									{snapshot.rewardReserve.toFixed(7)} XLM
+									{snapshot.utilization.toFixed(2)}%
 								</span>
 							</div>
 						</div>
@@ -690,31 +703,39 @@ function SavingsCard({
 					<button
 						type="button"
 						onClick={onDeposit}
-						disabled={!snapshot}
+						disabled={!snapshot || snapshot.walletBalance <= 0}
 						className="focus-ring flex items-center justify-center gap-2 rounded-xl bg-lumina-500 px-3 py-3 text-sm font-bold text-white disabled:opacity-50"
 					>
-						<Plus size={17} /> Deposit
+						<Plus size={17} /> Supply
 					</button>
 					<button
 						type="button"
 						onClick={onWithdraw}
-						disabled={!snapshot || snapshot.principal <= 0}
+						disabled={
+							!snapshot ||
+							snapshot.supplied <= 0 ||
+							snapshot.poolLiquidity <= 0
+						}
 						className="focus-ring rounded-xl border border-slate-200 px-3 py-3 text-sm font-bold disabled:opacity-40"
 					>
 						Withdraw
 					</button>
 				</div>
-				{snapshot && snapshot.accruedYield > 0 && (
+				{snapshot && snapshot.walletBalance <= 0 && (
 					<button
 						type="button"
-						onClick={onClaim}
-						disabled={isClaiming || snapshot.rewardReserve <= 0}
+						onClick={onFund}
+						disabled={isFunding}
 						className="focus-ring mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-slate-100 px-3 py-3 text-sm font-bold text-slate-700 disabled:opacity-40"
 					>
-						{isClaiming && <LoaderCircle size={16} className="animate-spin" />}
-						Claim accrued yield
+						{isFunding && <LoaderCircle size={16} className="animate-spin" />}
+						Get Blend Testnet USDC
 					</button>
 				)}
+				<p className="mt-3 text-[11px] leading-4 text-slate-400">
+					Powered by Blend lending. Yield comes from borrower interest; the
+					rate is variable and supplied balance includes accrued interest.
+				</p>
 			</div>
 		</div>
 	)

@@ -21,9 +21,21 @@ if (network !== "TESTNET" || networkPassphrase !== Networks.TESTNET) {
 }
 
 export const config = Object.freeze({
-	contractId: required(
-		"PUBLIC_SAVINGS_CONTRACT_ID",
-		import.meta.env.PUBLIC_SAVINGS_CONTRACT_ID,
+	blendFaucetUrl: required(
+		"PUBLIC_BLEND_FAUCET_URL",
+		import.meta.env.PUBLIC_BLEND_FAUCET_URL,
+	),
+	blendPoolId: required(
+		"PUBLIC_BLEND_POOL_ID",
+		import.meta.env.PUBLIC_BLEND_POOL_ID,
+	),
+	blendUsdcContractId: required(
+		"PUBLIC_BLEND_USDC_CONTRACT_ID",
+		import.meta.env.PUBLIC_BLEND_USDC_CONTRACT_ID,
+	),
+	blendUsdcIssuer: required(
+		"PUBLIC_BLEND_USDC_ISSUER",
+		import.meta.env.PUBLIC_BLEND_USDC_ISSUER,
 	),
 	friendbotUrl: required(
 		"PUBLIC_STELLAR_FRIENDBOT_URL",

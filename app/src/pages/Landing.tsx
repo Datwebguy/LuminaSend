@@ -30,8 +30,8 @@ const steps = [
 	},
 	{
 		number: "03",
-		title: "Save what arrives",
-		body: "Put part of each remittance to work in an on-chain savings vault.",
+		title: "Earn on what arrives",
+		body: "Supply USDC to Blend and earn the live rate paid by borrowers.",
 		icon: TrendingUp,
 	},
 ]
@@ -55,7 +55,7 @@ const benefits = [
 	{
 		icon: TrendingUp,
 		title: "Grow after payday",
-		body: "Turn received funds into a savings habit with transparent yield.",
+		body: "Earn transparent, variable lending yield through Blend on Stellar.",
 	},
 ]
 
@@ -157,7 +157,7 @@ export default function Landing() {
 						</h1>
 						<p className="mt-9 max-w-xl text-lg leading-8 text-slate-600 sm:text-xl">
 							Send money home in seconds, keep fees low, and help every
-							remittance go further with built-in savings.
+							remittance go further with optional on-chain earning.
 						</p>
 						<div className="mt-9 flex flex-col gap-3 sm:flex-row">
 							<Link
@@ -208,14 +208,14 @@ export default function Landing() {
 										Every action stays verifiable
 									</h2>
 									<p className="mt-2 text-sm leading-6 text-slate-500">
-										Wallet authorization, settlement, and savings custody remain
-										on open Stellar infrastructure.
+										Wallet authorization, settlement, and lending positions
+										remain on open Stellar infrastructure.
 									</p>
 									<div className="mt-7 space-y-3">
 										{[
 											["Wallet authorization", "Freighter"],
 											["Payment settlement", "Stellar Testnet"],
-											["Savings custody", "Soroban contract"],
+											["Earning market", "Blend Protocol"],
 										].map(([label, value]) => (
 											<div
 												key={label}
@@ -253,7 +253,7 @@ export default function Landing() {
 						<span>Purpose-built on</span>
 						<span className="text-lg font-bold tracking-tight text-slate-700">STELLAR</span>
 						<span className="h-4 w-px bg-slate-200" />
-						<span>USDC ready</span>
+						<span>Live Blend lending</span>
 						<span className="h-4 w-px bg-slate-200" />
 						<span>Designed for Southeast Asia</span>
 					</div>
@@ -349,7 +349,16 @@ export default function Landing() {
 				<div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-5 px-5 py-8 sm:flex-row sm:px-8">
 					<LuminaLogo />
 					<p className="text-center text-sm text-slate-400">
-						Stellar Testnet · Non-custodial · Open network infrastructure
+						Created by{" "}
+						<a
+							href="https://x.com/Datweb3guy"
+							target="_blank"
+							rel="noreferrer"
+							className="font-semibold text-slate-600 hover:text-lumina-600"
+						>
+							Datweb3guy
+						</a>{" "}
+						· Stellar Testnet · Non-custodial
 					</p>
 				</div>
 			</footer>
