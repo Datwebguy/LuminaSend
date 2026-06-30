@@ -83,12 +83,12 @@ export default function SavingsModal({
 
 	return (
 		<div
-			className="fixed inset-0 z-[100] grid place-items-end bg-ink/35 backdrop-blur-sm sm:place-items-center sm:p-5"
+			className="fixed inset-0 z-[100] grid place-items-end overflow-y-auto overscroll-contain bg-ink/35 backdrop-blur-sm sm:place-items-center sm:p-5"
 			role="dialog"
 			aria-modal="true"
 			aria-labelledby="savings-dialog-title"
 		>
-			<div className="w-full rounded-t-[28px] bg-white p-5 shadow-2xl sm:max-w-[470px] sm:rounded-[28px] sm:p-7">
+			<div className="max-h-[100dvh] w-full overflow-y-auto overscroll-contain rounded-t-[28px] bg-white p-5 shadow-2xl sm:max-h-[calc(100dvh-2.5rem)] sm:max-w-[470px] sm:rounded-[28px] sm:p-7">
 				{step === "form" && (
 					<>
 						<div className="flex items-start justify-between">
