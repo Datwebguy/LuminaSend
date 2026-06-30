@@ -1,0 +1,11 @@
+.git
+.agents
+.config
+.vercel
+.env
+.env.*
+node_modules
+**/node_modules
+target
+app/dist
+*.log
