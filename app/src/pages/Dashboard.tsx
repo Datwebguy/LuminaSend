@@ -405,8 +405,10 @@ export default function Dashboard() {
 												<ShieldCheck size={21} />
 											</div>
 											<div>
-												<h3 className="font-bold">Verified contract</h3>
-												<p className="text-xs text-slate-400">Stellar Testnet</p>
+												<h3 className="font-bold">Savings contract</h3>
+												<p className="text-xs text-slate-400">
+													Live on Stellar Testnet
+												</p>
 											</div>
 										</div>
 										<a
