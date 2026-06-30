@@ -1,7 +1,13 @@
 {
   "name": "luminasend",
   "version": "0.1.0",
+  "author": "Datweb3guy",
+  "homepage": "https://luminasend.vercel.app",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Datwebguy/LuminaSend.git"
+  },
   "scripts": {
     "dev": "npm run dev --workspace app",
     "start": "npm run dev --workspace app",

@@ -21,9 +21,21 @@ if (network !== "TESTNET" || networkPassphrase !== Networks.TESTNET) {
 }
 
 export const config = Object.freeze({
-	contractId: required(
-		"PUBLIC_SAVINGS_CONTRACT_ID",
-		import.meta.env.PUBLIC_SAVINGS_CONTRACT_ID,
+	aquariusApiUrl: required(
+		"PUBLIC_AQUARIUS_API_URL",
+		import.meta.env.PUBLIC_AQUARIUS_API_URL,
+	),
+	aquariusPoolId: required(
+		"PUBLIC_AQUARIUS_POOL_ID",
+		import.meta.env.PUBLIC_AQUARIUS_POOL_ID,
+	),
+	blendPoolId: required(
+		"PUBLIC_BLEND_POOL_ID",
+		import.meta.env.PUBLIC_BLEND_POOL_ID,
+	),
+	blendUsdcContractId: required(
+		"PUBLIC_BLEND_USDC_CONTRACT_ID",
+		import.meta.env.PUBLIC_BLEND_USDC_CONTRACT_ID,
 	),
 	friendbotUrl: required(
 		"PUBLIC_STELLAR_FRIENDBOT_URL",
@@ -35,6 +47,10 @@ export const config = Object.freeze({
 	),
 	network,
 	networkPassphrase,
+	nativeAssetContractId: required(
+		"PUBLIC_STELLAR_NATIVE_ASSET_CONTRACT_ID",
+		import.meta.env.PUBLIC_STELLAR_NATIVE_ASSET_CONTRACT_ID,
+	),
 	rpcUrl: required(
 		"PUBLIC_STELLAR_RPC_URL",
 		import.meta.env.PUBLIC_STELLAR_RPC_URL,

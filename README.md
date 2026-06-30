@@ -1,12 +1,13 @@
 # LuminaSend
 
-LuminaSend is a non-custodial cross-border payment and savings application on
-Stellar Testnet. Users connect Freighter, view balances held by their own
-account, send XLM or Circle Testnet USDC, inspect live account activity, and
-manage an XLM position in a deployed Soroban savings contract.
+LuminaSend is a non-custodial cross-border payment and earning application on
+Stellar Testnet. Users connect Freighter, send XLM or USDC, inspect real account
+activity, and choose between Blend lending and Aquarius liquidity using the
+same Circle Testnet USDC held in their wallet.
 
-No account secrets, recovery phrases, or private keys enter the application.
-Freighter authorizes every state-changing operation.
+Every balance, rate, position, and transaction comes from Stellar. LuminaSend
+does not store private keys, recovery phrases, user profiles, or financial
+records.
 
 ## Product
 
@@ -16,16 +17,26 @@ Freighter authorizes every state-changing operation.
 
 ### Live functionality
 
-- Freighter account authorization with strict Testnet validation
-- XLM balance, spendable XLM, and Circle Testnet USDC balance from Horizon
-- Live base-reserve calculation from the latest Stellar ledger
+- Freighter wallet authorization with strict Testnet validation
+- XLM, spendable XLM, and Circle Testnet USDC balances from Horizon
 - Signed XLM and USDC payments submitted to Stellar Testnet
-- Destination-account and USDC trustline validation
-- Payment and Soroban transaction history from Horizon
-- Savings principal, accrued yield, contract APY, and reward reserve from RPC
-- Soroban deposits, withdrawals, and yield claims authorized through Freighter
-- Direct links to each transaction and the deployed contract on Stellar Expert
-- Official Friendbot funding for unfunded Testnet accounts
+- Real payment and Soroban transaction history from Horizon
+- Live Blend and Aquarius Circle-USDC APYs and wallet-owned positions
+- Direct Blend supply and withdrawal transactions signed by the user
+- Direct Aquarius USDC/XLM liquidity deposits and withdrawals
+- Direct Stellar Expert links for transactions and contracts
+
+## How earning works
+
+Blend supplies Circle USDC to a lending pool where borrower interest increases
+suppliers' positions. Aquarius pairs Circle USDC with XLM in an AMM, where
+liquidity providers earn swap fees and accept price and impermanent-loss risk.
+There is no LuminaSend-funded reward reserve and no fixed or promised rate.
+
+The dashboard reads both rates from live protocol data and identifies the best
+currently verified Circle-USDC option. A 5% target is never substituted for a
+real network rate. Testnet assets and reported Testnet yields have no monetary
+value.
 
 ## Network configuration
 
@@ -33,57 +44,42 @@ LuminaSend is intentionally restricted to Stellar Testnet.
 
 | Resource | Address |
 | --- | --- |
-| Savings contract | `CAN7GWJJCUM6UOXYWSWFER7WN5T2MOSC4LLI2UYTIQ2SEHWKOHW2YNPV` |
-| Native XLM asset contract | `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC` |
+| Blend Regional Starter Pack | `CAPBMXIQTICKWFPWFDJWMAKBXBPJZUKLNONQH3MLPLLBKQ643CYN5PRW` |
+| Aquarius Circle USDC/XLM pool | `CDVB6O3WX24AAZ77SQRN52ABU4ECB66N36FG5BFVPTV54DPG3V6MOTOD` |
+| Circle Testnet USDC contract | `CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA` |
 | Circle Testnet USDC issuer | `GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5` |
 
-[Inspect the savings contract on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CAN7GWJJCUM6UOXYWSWFER7WN5T2MOSC4LLI2UYTIQ2SEHWKOHW2YNPV).
-
-The savings contract accrues yield according to its immutable constructor rate.
-Claims are limited to the funded reward reserve, so the contract cannot create
-unbacked XLM. Testnet assets have no monetary value.
+[Inspect the Blend pool on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CAPBMXIQTICKWFPWFDJWMAKBXBPJZUKLNONQH3MLPLLBKQ643CYN5PRW).
 
 ## Architecture
 
 ```text
 Freighter
-   │ authorizes transaction XDR
-   ▼
-React application
-   ├── Horizon ───── balances, ledgers, payments, transactions
-   └── Stellar RPC ─ simulation, contract state, Soroban submission
-                           │
-                           ▼
-                    Savings contract
-                           │
-                           ▼
-                    Native XLM SAC
+  └─ authorizes transaction XDR
+      └─ React + Vite application
+          ├─ Horizon: balances, ledgers, payments, activity
+          ├─ Stellar RPC: simulation and Soroban submission
+          ├─ Blend lending pool: wallet-owned Circle-USDC position
+          └─ Aquarius AMM: wallet-owned Circle-USDC/XLM LP position
 ```
 
-The project was initialized with Scaffold Stellar and uses:
-
-- React 19, TypeScript, Vite, and Tailwind CSS
-- `@stellar/stellar-sdk`
-- `@stellar/freighter-api`
-- Soroban SDK with Rust
-- Stellar Horizon and Stellar RPC
+The project was initialized with Scaffold Stellar and uses React 19,
+TypeScript, Vite, Tailwind CSS, `@stellar/stellar-sdk`,
+`@stellar/freighter-api`, Blend's official JavaScript SDK, and Aquarius's
+Soroban AMM contracts.
 
 ## Repository structure
 
 ```text
 LuminaSend/
 ├── app/
-│   ├── src/components/       Transaction and savings interfaces
+│   ├── src/components/       Payment and lending transaction interfaces
 │   ├── src/contexts/         Wallet context contract
-│   ├── src/lib/              Network, wallet, payment, and contract services
-│   ├── src/pages/            Landing page and authenticated application
-│   └── .env.example          Required public network configuration
-├── contracts/
-│   └── savings-vault/        Soroban source and tests
-├── packages/
-│   └── savings_vault/        Generated TypeScript contract bindings
-├── docs/screenshots/         Rendered product screenshots
-├── environments.toml         Scaffold Stellar Testnet environment
+│   ├── src/lib/              Stellar, Freighter, Blend, and Aquarius services
+│   ├── src/pages/            Landing page and application dashboard
+│   └── .env.example          Public Testnet configuration
+├── docs/screenshots/         Product screenshots
+├── environments.toml         Scaffold Stellar Testnet contracts
 ├── scaffold.yml              Scaffold Stellar workspace configuration
 └── vercel.json               Vercel build, routing, and security headers
 ```
@@ -94,11 +90,8 @@ LuminaSend/
 
 - Node.js 22 or newer
 - npm
-- Rust 1.89 or newer
-- `wasm32v1-none` Rust target
-- Stellar CLI
-- Scaffold Stellar CLI
 - Freighter browser extension
+- Freighter configured for Stellar Testnet
 
 ### Install and run
 
@@ -110,30 +103,33 @@ cp app/.env.example app/.env
 npm run dev
 ```
 
-On Windows PowerShell, use:
+On Windows PowerShell:
 
 ```powershell
 Copy-Item app/.env.example app/.env
 npm.cmd run dev
 ```
 
-Open `http://localhost:5173`, set Freighter to Testnet, and authorize the
-connection.
+Open `http://localhost:5173`.
 
 ## Environment variables
 
-All frontend variables are public network configuration. LuminaSend has no
-server-side wallet and requires no application secret.
+All variables are public network configuration. LuminaSend has no server-side
+wallet and requires no application secret.
 
 | Variable | Purpose |
 | --- | --- |
-| `PUBLIC_STELLAR_NETWORK` | Network label; must be `TESTNET` |
+| `PUBLIC_STELLAR_NETWORK` | Must be `TESTNET` |
 | `PUBLIC_STELLAR_NETWORK_PASSPHRASE` | Stellar Testnet passphrase |
 | `PUBLIC_STELLAR_RPC_URL` | Stellar RPC endpoint |
 | `PUBLIC_STELLAR_HORIZON_URL` | Horizon endpoint |
-| `PUBLIC_STELLAR_FRIENDBOT_URL` | Official Testnet funding endpoint |
-| `PUBLIC_STELLAR_USDC_ISSUER` | Circle Testnet USDC issuer |
-| `PUBLIC_SAVINGS_CONTRACT_ID` | Deployed Soroban savings contract |
+| `PUBLIC_STELLAR_FRIENDBOT_URL` | Official Stellar Testnet funding endpoint |
+| `PUBLIC_STELLAR_USDC_ISSUER` | Circle Testnet USDC issuer for payments |
+| `PUBLIC_STELLAR_NATIVE_ASSET_CONTRACT_ID` | Native XLM asset contract |
+| `PUBLIC_BLEND_POOL_ID` | Blend Regional Starter Pack pool |
+| `PUBLIC_BLEND_USDC_CONTRACT_ID` | Circle Testnet USDC asset contract |
+| `PUBLIC_AQUARIUS_API_URL` | Aquarius live Testnet pool API |
+| `PUBLIC_AQUARIUS_POOL_ID` | Aquarius Circle-USDC/XLM pool |
 
 The application validates required configuration at startup and refuses to run
 with a non-Testnet passphrase.
@@ -144,13 +140,7 @@ with a non-Testnet passphrase.
 npm run lint
 npm run typecheck
 npm run build
-cargo fmt --all -- --check
-cargo test --workspace
-cargo build --locked --release --target wasm32v1-none --package savings-vault
 ```
-
-Windows requires a compatible native Rust linker for `cargo test`. Contract
-Wasm builds do not require a native test executable.
 
 ## Deploy to Vercel
 
@@ -160,35 +150,28 @@ Wasm builds do not require a native test executable.
    Environment Variables.
 4. Deploy.
 
-`vercel.json` configures:
+`vercel.json` uses `npm ci`, builds the Vite application, serves `app/dist`,
+adds SPA fallback routing, and applies baseline browser security headers.
+Never add private keys, local identities, or `.env` files to Vercel.
 
-- `npm ci` installation
-- `npm run build`
-- `app/dist` as the output directory
-- SPA fallback routing
-- baseline browser security headers
+## Security model
 
-No private key, deployer identity, or `.env` file should be added to Vercel.
-
-## Contract interface
-
-- `deposit(from, amount)` transfers XLM into the vault and records principal.
-- `withdraw(owner, amount)` returns authorized principal.
-- `position(owner)` returns principal and time-accrued yield.
-- `claim_yield(owner)` transfers backed accrued yield.
-- `fund_rewards(admin, amount)` adds XLM to the reward reserve.
-- `apy_bps()`, `reward_reserve()`, and `total_deposits()` expose live metrics.
-
-## Security
-
-- The browser never requests or stores secret keys.
-- Freighter signs every payment and contract invocation.
-- Network passphrase checks prevent cross-network signing.
-- Recipient addresses and USDC trustlines are validated before submission.
-- Contract deposits and withdrawals require account authorization.
-- Environment files and local Stellar identities are excluded from Git.
+- The browser never requests or stores a secret key.
+- Freighter signs every payment, supply, liquidity deposit, and withdrawal.
+- Positions are recorded by Blend or Aquarius for the user's wallet address.
+- LuminaSend has no custody account and no withdrawal authority.
+- Network checks prevent cross-network signing.
+- Recipient addresses and Circle USDC trustlines are validated before payment.
 
 Please report security concerns according to [SECURITY.md](SECURITY.md).
+
+## Creator
+
+LuminaSend is created and maintained by
+[Datweb3guy](https://x.com/Datweb3guy).
+
+Public Stellar address:
+`GBCNH3PNORW5K4GMVIMT5RQEUZZL7IHPCYF2X2HHKNIAILBCKDWBUM65`
 
 ## License
 

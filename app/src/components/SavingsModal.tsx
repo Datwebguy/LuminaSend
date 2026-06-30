@@ -8,7 +8,11 @@ import {
 	X,
 } from "lucide-react"
 import { useMemo, useState } from "react"
-import { depositSavings, withdrawSavings } from "../lib/savings"
+import {
+	depositSavings,
+	type EarnProtocol,
+	withdrawSavings,
+} from "../lib/savings"
 
 export type SavingsAction = "deposit" | "withdraw"
 
@@ -17,6 +21,9 @@ type SavingsModalProps = {
 	address: string
 	apy: number
 	available: number
+	protocol: EarnProtocol
+	xlmAvailable: number
+	xlmPerUsdc: number
 	onClose: () => void
 	onSuccess: () => Promise<void>
 }
@@ -28,6 +35,9 @@ export default function SavingsModal({
 	address,
 	apy,
 	available,
+	protocol,
+	xlmAvailable,
+	xlmPerUsdc,
 	onClose,
 	onSuccess,
 }: SavingsModalProps) {
@@ -37,22 +47,31 @@ export default function SavingsModal({
 	const [hash, setHash] = useState("")
 	const numericAmount = Number(amount)
 	const isDeposit = action === "deposit"
+	const isAquarius = protocol === "aquarius"
+	const requiredXlm =
+		isAquarius && Number.isFinite(numericAmount)
+			? numericAmount * xlmPerUsdc
+			: 0
 	const projected = useMemo(
-		() => (Number.isFinite(numericAmount) ? (numericAmount * apy) / 100 : 0),
-		[apy, numericAmount],
+		() =>
+			Number.isFinite(numericAmount)
+				? (numericAmount * (isAquarius ? 2 : 1) * apy) / 100
+				: 0,
+		[apy, isAquarius, numericAmount],
 	)
 	const canSubmit =
 		Number.isFinite(numericAmount) &&
 		numericAmount > 0 &&
-		numericAmount <= available
+		numericAmount <= available &&
+		(!isDeposit || !isAquarius || requiredXlm <= xlmAvailable)
 
 	async function submit() {
 		setStep("signing")
 		setError("")
 		try {
 			const transactionHash = isDeposit
-				? await depositSavings(address, amount)
-				: await withdrawSavings(address, amount)
+				? await depositSavings(protocol, address, amount)
+				: await withdrawSavings(protocol, address, amount)
 			setHash(transactionHash)
 			setStep("success")
 			await onSuccess()
@@ -75,13 +94,13 @@ export default function SavingsModal({
 						<div className="flex items-start justify-between">
 							<div>
 								<p className="text-xs font-bold tracking-widest text-lumina-600 uppercase">
-									On-chain savings
+									{isAquarius ? "Aquarius liquidity" : "Blend lending"}
 								</p>
 								<h2
 									id="savings-dialog-title"
 									className="mt-1 text-2xl font-bold tracking-tight"
 								>
-									{isDeposit ? "Deposit XLM" : "Withdraw XLM"}
+									{isDeposit ? "Supply USDC" : "Withdraw USDC"}
 								</h2>
 							</div>
 							<button
@@ -97,7 +116,9 @@ export default function SavingsModal({
 						<div className="mt-6 rounded-3xl bg-gradient-to-br from-lumina-500 to-lumina-700 p-5 text-white">
 							<div className="flex items-center justify-between">
 								<div>
-									<p className="text-sm text-white/65">Contract APY</p>
+									<p className="text-sm text-white/65">
+										Current {isAquarius ? "LP" : "supply"} APY
+									</p>
 									<p className="mt-1 text-4xl font-bold">{apy.toFixed(2)}%</p>
 								</div>
 								<div className="grid h-14 w-14 place-items-center rounded-2xl bg-white/15">
@@ -105,8 +126,9 @@ export default function SavingsModal({
 								</div>
 							</div>
 							<p className="mt-5 border-t border-white/15 pt-4 text-xs leading-5 text-white/65">
-								The rate and position are read directly from the live Soroban
-								contract on Stellar Testnet.
+								{isAquarius
+									? "Live fee APY from the Circle USDC/XLM pool. LP positions hold both assets and can experience impermanent loss."
+									: "Variable rate from Blend's live Circle USDC reserve. It changes with borrowing demand."}
 							</p>
 						</div>
 
@@ -118,7 +140,7 @@ export default function SavingsModal({
 								{available.toLocaleString(undefined, {
 									maximumFractionDigits: 7,
 								})}{" "}
-								XLM available
+								USDC available
 							</span>
 						</div>
 						<div className="input-shell mt-2 flex items-center rounded-2xl border border-slate-200 px-4 py-3 transition">
@@ -132,7 +154,7 @@ export default function SavingsModal({
 								placeholder="0.00"
 								className="min-w-0 flex-1 bg-transparent text-2xl font-bold outline-none placeholder:text-slate-300"
 							/>
-							<span className="font-bold text-slate-500">XLM</span>
+							<span className="font-bold text-slate-500">USDC</span>
 						</div>
 						<button
 							type="button"
@@ -143,13 +165,23 @@ export default function SavingsModal({
 						</button>
 
 						<div className="mt-5 rounded-2xl bg-slate-50 p-4 text-sm">
+							{isAquarius && (
+								<div className="mb-3 flex justify-between">
+									<span className="text-slate-500">
+										{isDeposit ? "XLM paired" : "Est. XLM returned"}
+									</span>
+									<span className="font-bold">
+										{requiredXlm.toFixed(7)} XLM
+									</span>
+								</div>
+							)}
 							{isDeposit && (
 								<div className="flex justify-between">
 									<span className="text-slate-500">
 										Projected annual accrual
 									</span>
 									<span className="font-bold text-lumina-700">
-										+{projected.toFixed(7)} XLM
+										+{projected.toFixed(7)} USDC
 									</span>
 								</div>
 							)}
@@ -164,8 +196,9 @@ export default function SavingsModal({
 						</div>
 						<div className="mt-4 flex gap-2 rounded-xl bg-amber-50 px-3 py-3 text-xs leading-5 text-amber-800">
 							<Info size={16} className="mt-0.5 shrink-0" />
-							Testnet assets have no monetary value. Accrued rewards can only be
-							claimed when the contract reward reserve is funded.
+							{isAquarius
+								? "Aquarius requires equal-value USDC and XLM. APY is variable, and LP value can fall relative to simply holding both assets."
+								: "Testnet assets have no monetary value. Supply rates are variable, and withdrawals depend on available Blend pool liquidity."}
 						</div>
 						{error && (
 							<div
@@ -207,10 +240,16 @@ export default function SavingsModal({
 							Transaction confirmed
 						</p>
 						<h2 className="mt-2 text-3xl font-bold">
-							{amount} XLM {isDeposit ? "deposited" : "withdrawn"}
+							{amount} USDC{" "}
+							{isDeposit
+								? isAquarius
+									? "paired"
+									: "supplied"
+								: "withdrawn"}
 						</h2>
 						<p className="mt-3 text-sm text-slate-500">
-							Your live contract position has been refreshed.
+							Your wallet-owned {isAquarius ? "Aquarius LP" : "Blend"}{" "}
+							position has been refreshed.
 						</p>
 						<a
 							href={`https://stellar.expert/explorer/testnet/tx/${hash}`}
