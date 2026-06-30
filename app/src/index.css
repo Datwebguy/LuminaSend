@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+@theme {
+	--color-lumina-50: #ecfff7;
+	--color-lumina-100: #d1ffea;
+	--color-lumina-200: #a7ffd8;
+	--color-lumina-300: #69fbc0;
+	--color-lumina-400: #2de99f;
+	--color-lumina-500: #00c875;
+	--color-lumina-600: #00a961;
+	--color-lumina-700: #008750;
+	--color-lumina-800: #076a43;
+	--color-ink: #14231d;
+	--font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+	--shadow-soft: 0 24px 70px -28px rgba(12, 79, 53, 0.24);
+}
+
+@layer base {
+	* {
+		box-sizing: border-box;
+	}
+
+	html {
+		scroll-behavior: smooth;
+	}
+
+	body {
+		margin: 0;
+		min-width: 320px;
+		background: #fbfdfc;
+		color: var(--color-ink);
+		font-family: var(--font-sans);
+		-webkit-font-smoothing: antialiased;
+	}
+
+	button,
+	input,
+	select {
+		font: inherit;
+	}
+
+	button,
+	a {
+		-webkit-tap-highlight-color: transparent;
+	}
+}
+
+@layer components {
+	.glass-card {
+		background: rgba(255, 255, 255, 0.86);
+		border: 1px solid rgba(20, 35, 29, 0.07);
+		box-shadow: var(--shadow-soft);
+		backdrop-filter: blur(18px);
+	}
+
+	.focus-ring {
+		@apply focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-lumina-200;
+	}
+
+	.input-shell {
+		@apply focus-within:border-lumina-500 focus-within:ring-4 focus-within:ring-lumina-100;
+	}
+
+	.text-balance {
+		text-wrap: balance;
+	}
+}
+
+@keyframes float {
+	0%,
+	100% {
+		transform: translateY(0) rotate(-4deg);
+	}
+	50% {
+		transform: translateY(-10px) rotate(-1deg);
+	}
+}
+
+@keyframes pulse-soft {
+	0%,
+	100% {
+		opacity: 0.5;
+		transform: scale(1);
+	}
+	50% {
+		opacity: 0.9;
+		transform: scale(1.08);
+	}
+}
+
+.plane-float {
+	animation: float 5s ease-in-out infinite;
+}
+
+.glow-pulse {
+	animation: pulse-soft 3.4s ease-in-out infinite;
+}

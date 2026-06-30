@@ -1,0 +1,24 @@
+# LuminaSend intentionally targets Stellar Testnet only.
+
+[development.network]
+rpc-url = "https://soroban-testnet.stellar.org"
+network-passphrase = "Test SDF Network ; September 2015"
+
+[[development.accounts]]
+name = "luminasend-deployer"
+default = true
+
+[development.contracts]
+savings_vault = { id = "CAN7GWJJCUM6UOXYWSWFER7WN5T2MOSC4LLI2UYTIQ2SEHWKOHW2YNPV", client = true }
+
+[staging.network]
+rpc-url = "https://soroban-testnet.stellar.org"
+network-passphrase = "Test SDF Network ; September 2015"
+
+[[staging.accounts]]
+name = "luminasend-deployer"
+default = true
+
+[staging.contracts]
+savings_vault = { id = "CAN7GWJJCUM6UOXYWSWFER7WN5T2MOSC4LLI2UYTIQ2SEHWKOHW2YNPV", client = true }
+

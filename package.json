@@ -1,0 +1,15 @@
+{
+  "name": "luminasend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm run dev --workspace app",
+    "start": "npm run dev --workspace app",
+    "build": "npm run build --workspace app",
+    "lint": "npm run lint --workspace app",
+    "typecheck": "npm run typecheck --workspace app"
+  },
+  "workspaces": [
+    "app"
+  ]
+}
